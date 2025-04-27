@@ -58,19 +58,6 @@ module "blog_alb" {
 
   security_groups = [module.blog_sg.security_group_id]
 
-  # Listener
-  listeners = [
-    {
-      port     = 80
-      protocol = "HTTP"
-
-      default_action = {
-        type             = "forward"
-        target_group_index = 0
-      }
-    }
-  ]
-
   # Target Groups
   target_groups = [
     {
@@ -88,6 +75,17 @@ module "blog_alb" {
   ]
 }
 
+resource "aws_lb_listener" "HTTP" {
+  load_balancer_arn = module.blog_alb.load_balancer_arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+    target_group_arn = module.blog_alb.target_groups[0].arn
+  }
+  
+}
 
 /*module "blog_alb" {
   source = "terraform-aws-modules/alb/aws"
