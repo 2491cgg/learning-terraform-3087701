@@ -45,6 +45,22 @@ resource "aws_instance" "blog" {
   }
 }
 
+module "autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "8.2.0"
+
+  name      = "blog-asg"
+  min_size  = 1
+  max_size  = 2
+
+  vpc_zone_identifier = module.blog_vpc.public_subnets
+  target_group_arns   = [ module.blog_alb.target_group_arns[0] ]
+  security_groups = [module.blog_sg.security_group_id]
+
+  image_id = data.aws_ami.app_ami.id
+  instance_type = var.instance_type
+}
+
 module "blog_alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "~> 8.0"
@@ -86,43 +102,6 @@ resource "aws_lb_listener" "HTTP" {
   }
   
 }
-
-/*module "blog_alb" {
-  source = "terraform-aws-modules/alb/aws"
-
-  name    = "blog-alb"
-
-  load_balancer_type = "application"
-
-  vpc_id  = module.blog_vpc.vpc_id
-  subnets = module.blog_vpc.public_subnets
-  security_groups = [ module.blog_sg.security_group_id ]
-  
-  listeners = {
-    port                = 80
-    protocol            = "HTTP"
-    default_action_type = "forward"
-    target_group_index  = 0
-  }
-
-  target_groups = {
-      name_prefix      = "h1"
-      protocol         = "HTTP"
-      port             = 80
-      target_type      = "instance"
-      target_groups = {
-        my_target = {
-          target_id = aws_instance.blog.id
-          port      = 80
-        }
-      }
-  }
-
-  tags = {
-    Environment = "Development"
-    Project     = "Example"
-  }
-}*/
 
 module "blog_sg" {
   source  = "terraform-aws-modules/security-group/aws"
