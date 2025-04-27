@@ -38,7 +38,6 @@ resource "aws_instance" "blog" {
   instance_type = var.instance_type
 
   vpc_security_group_ids = [ module.blog_sg.security_group_id ]
-
   subnet_id            = module.blog_vpc.public_subnets[0]
 
   tags = {
@@ -46,44 +45,51 @@ resource "aws_instance" "blog" {
   }
 }
 
-/*module "alb" {
-  source = "terraform-aws-modules/alb/aws"
+module "blog_alb" {
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 8.0"
 
-  name            = "blog-alb"
-  vpc_id          = module.blog_vpc.vpc_id
-  subnets         = module.blog_vpc.public_subnets
-  security_groups = [ module.blog_sg.security_group_id ]
+  name = "blog_alb"
 
-  target_groups = [
+  load_balancer_type = "application"
+
+  vpc_id  = module.blog_vpc.vpc_id
+  subnets = module.blog_vpc.public_subnets
+
+  security_groups = [module.blog_sg.security_group_id]
+
+  # Listener
+  listeners = [
     {
-      name_prifix       = "blog-"
-      backend_protocol  = "HTTP"
-      backend_port      = 80
-      target_type       = "instance"
-      targets = {
-        my_target = {
-          target_id = aws_instance.blog.id
-          port      = 80
-        }
+      port     = 80
+      protocol = "HTTP"
+
+      default_action = {
+        type             = "forward"
+        target_group_index = 0
       }
     }
   ]
 
- listeners = [
+  # Target Groups
+  target_groups = [
     {
-      port                = 80
-      protocol            = "HTTP"
-      default_action_type = "forward"
-      target_group_index  = 0
+      name_prefix = "blog-"
+      backend_protocol = "HTTP"
+      backend_port     = 80
+      target_type      = "instance"
+      targets = [
+        {
+          target_id = aws_instance.blog.id
+          port      = 80
+        }
+      ]
     }
   ]
+}
 
-  tags = {
-    Environment = "Development"
-  }
-}*/
 
-module "blog_alb" {
+/*module "blog_alb" {
   source = "terraform-aws-modules/alb/aws"
 
   name    = "blog-alb"
@@ -118,7 +124,7 @@ module "blog_alb" {
     Environment = "Development"
     Project     = "Example"
   }
-}
+}*/
 
 module "blog_sg" {
   source  = "terraform-aws-modules/security-group/aws"
