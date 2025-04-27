@@ -76,13 +76,13 @@ module "blog_alb" {
 }
 
 resource "aws_lb_listener" "HTTP" {
-  load_balancer_arn = module.blog_alb.load_balancer_arn
+  load_balancer_arn = module.blog_alb.this_lb_arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type = "forward"
-    target_group_arn = module.blog_alb.target_groups[0].arn
+    target_group_arn = module.blog_alb.target_group.arn[0]
   }
   
 }
