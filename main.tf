@@ -46,7 +46,7 @@ resource "aws_instance" "blog" {
   }
 }
 
-module "alb" {
+/*module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
   name            = "blog-alb"
@@ -81,7 +81,7 @@ module "alb" {
   tags = {
     Environment = "Development"
   }
-}
+}*/
 
 module "blog_alb" {
   source = "terraform-aws-modules/alb/aws"
